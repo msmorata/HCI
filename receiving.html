@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" c>
+  <title>Apex WMS — Warehouse Inventory & Order Management System</title>
+  
+  <!-- Standardized Icon Library: Phosphor Icons (Local Offline + CDN Fallback) -->
+  <link rel="stylesheet" href="css/phosphor/regular.css">
+  <link rel="stylesheet" href="css/phosphor/bold.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css">
+
+  <!-- Presentation Layer (Separation of Concerns) -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<!-- ====================================================================
+       MAIN APPLICATION SHELL (MODULES 2 - 7)
+       ==================================================================== -->
+  <div id="app-shell" class="view-container active">
+    
+    <!-- Persistent Sidebar Navigation (Rule #1: Consistency) -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="ph-bold ph-warehouse"></i>
+        </div>
+        <div>
+          <div class="brand-title">Apex Logistics</div>
+          <div class="brand-subtitle">WMS-SYSTEM v2.4</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <div class="nav-section-label">Warehouse Overview</div>
+        <div class="nav-item" onclick="window.location.href='dashboard.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-squares-four"></i>
+            <span>Dashboard</span>
+          </div>
+          <span class="nav-counter" id="nav-count-lowstock">0</span>
+        </div>
+
+        <div class="nav-section-label">Operations</div>
+        <div class="nav-item" onclick="window.location.href='inventory.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-package"></i>
+            <span>Inventory</span>
+          </div>
+          <span class="nav-counter" id="nav-count-inventory">8</span>
+        </div>
+
+        <div class="nav-item" onclick="window.location.href='receiving.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-truck"></i>
+            <span>Receiving</span>
+          </div>
+        </div>
+
+        <div class="nav-item" onclick="window.location.href='orders.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-clipboard-text"></i>
+            <span>Order & Picking</span>
+          </div>
+          <span class="nav-counter" id="nav-count-orders">2</span>
+        </div>
+
+        <div class="nav-section-label">Auditing & Intelligence</div>
+        <div class="nav-item" onclick="window.location.href='movements.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-arrows-down-up"></i>
+            <span>Stock Tracking</span>
+          </div>
+        </div>
+
+        <div class="nav-item" onclick="window.location.href='reports.html'">
+          <div class="nav-item-left">
+            <i class="nav-icon ph ph-chart-bar"></i>
+            <span>Reports & Alerts</span>
+          </div>
+          <span class="nav-counter" id="nav-count-notifications">2</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-user">
+        <div class="user-profile">
+          <div class="user-avatar"><i class="ph-bold ph-user"></i></div>
+          <div class="user-info">
+            <div class="user-name">User</div>
+            <div class="user-role">Operations Lead</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-icon" id="btn-logout" title="Sign Out">
+          <i class="ph-bold ph-sign-out" style="color: #94a3b8; font-size: 1.1rem;"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Stage -->
+    <main class="app-main">
+      
+      <!-- Top Sticky App Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <nav id="app-breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb">
+            <span>Warehouse</span>
+            <span>/</span>
+            <span>Overview</span>
+            <span>/</span>
+            <span class="crumb-current">Dashboard</span>
+          </nav>
+        </div>
+
+        <div class="header-right">
+          <div class="quick-search">
+            <i class="search-icon-left ph ph-magnifying-glass"></i>
+            <input type="text" id="global-search-input" placeholder="Search SKU, Product, or Bay...">
+            <kbd class="search-shortcut-hint">/</kbd>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-new-delivery">
+            <i class="ph-bold ph-plus"></i>
+            <span>Receive Delivery</span>
+          </button>
+        </div>
+      </header>
+
+<!-- ====================================================================
+           MODULE 4: RECEIVING MANAGEMENT VIEW (USER FLOW 1)
+           ==================================================================== -->
+      <section id="module-receiving" class="module-view active">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1>Inbound Receiving Management</h1>
+            <p>Log incoming shipment manifests, verify product condition, and update warehouse stock.</p>
+          </div>
+          <div class="page-actions">
+            <button type="button" class="btn btn-primary">
+              <i class="ph-bold ph-plus"></i>
+              <span>Record Inbound Delivery</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--space-4);">
+          <div class="card-header">
+            <h3>Verified Inbound Deliveries Log</h3>
+            <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Historical Receipts & Goods Inward</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" aria-label="Receiving Table">
+              <thead>
+                <tr>
+                  <th>Delivery Number</th>
+                  <th>Supplier</th>
+                  <th>Product</th>
+                  <th>Qty Received</th>
+                  <th>Date & Time</th>
+                  <th>Condition</th>
+                  <th>Inspector</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="receiving-table-body">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+<!-- ====================================================================
+       INTERACTIVE MODALS & DIALOGS (RULES #4, #5, #7)
+       ==================================================================== -->
+
+  <!-- Modal 1: Add / Edit Product Modal (Rule #5: Prevent Errors) -->
+  <div id="modal-product" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-product-title">Add New Warehouse Product</h2>
+        <button type="button" class="btn btn-outline btn-icon" data-close-modal="modal-product">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <form id="form-product">
+        <div class="modal-body">
+          <input type="hidden" id="prod-modal-id">
+          
+          <div class="form-group">
+            <label class="form-label required" for="prod-sku">Product SKU</label>
+            <input type="text" id="prod-sku" class="form-control font-mono" placeholder="e.g. SKU-IND-990" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required" for="prod-name">Product Name</label>
+            <input type="text" id="prod-name" class="form-control" placeholder="e.g. Heavy Duty Pallet Jack" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+              <label class="form-label required" for="prod-category">Category</label>
+              <select id="prod-category" class="form-select" required>
+                <option value="Electronics">Electronics</option>
+                <option value="Safety Gear">Safety Gear</option>
+                <option value="Packaging">Packaging</option>
+                <option value="Hardware">Hardware</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="prod-location">Warehouse Location</label>
+              <input type="text" id="prod-location" class="form-control font-mono" placeholder="e.g. Z-B2-S01" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+              <label class="form-label required" for="prod-quantity">Quantity</label>
+              <input type="number" id="prod-quantity" class="form-control font-mono" min="0" value="10" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="prod-min">Min Threshold</label>
+              <input type="number" id="prod-min" class="form-control font-mono" min="1" value="15" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-price">Unit Price ($)</label>
+              <input type="number" id="prod-price" class="form-control font-mono" step="0.01" min="0" value="25.00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prod-supplier">Primary Supplier</label>
+            <input type="text" id="prod-supplier" class="form-control" placeholder="e.g. ScanTech Global">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modal-product">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="ph-bold ph-floppy-disk"></i>
+            <span>Save Product</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Product Details Inspection Modal -->
+  <div id="modal-product-detail" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Product Specification & Stock Info</h2>
+        <button type="button" class="btn btn-outline btn-icon" data-close-modal="modal-product-detail">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: var(--space-4);">
+          <span id="detail-prod-status"></span>
+          <h2 id="detail-prod-name" style="margin-top: 8px;">Product Name</h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background-color: var(--color-bg-subtle); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--color-border-default);">
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">SKU Code</div>
+            <div id="detail-prod-sku" class="font-mono" style="font-weight: 700; color: var(--color-primary);"></div>
+          </div>
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Location Bay</div>
+            <div id="detail-prod-location" class="font-mono" style="font-weight: 700;"></div>
+          </div>
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Current Quantity</div>
+            <div class="font-mono" style="font-size: var(--font-size-xl); font-weight: bold;"><span id="detail-prod-qty"></span> units</div>
+          </div>
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Min Reorder Threshold</div>
+            <div class="font-mono" style="font-size: var(--font-size-lg); font-weight: 600;"><span id="detail-prod-min"></span> units</div>
+          </div>
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Category</div>
+            <div id="detail-prod-category" style="font-weight: 500;"></div>
+          </div>
+          <div>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Unit Valuation</div>
+            <div id="detail-prod-price" class="font-mono" style="font-weight: 600;"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+          <strong>Supplier:</strong> <span id="detail-prod-supplier"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-product-detail">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Receiving Multi-Step Wizard (USER FLOW 1 & RULE #4: CLOSURE) -->
+  <div id="modal-receiving" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h2>Receive New Inbound Shipment</h2>
+        <button type="button" class="btn btn-outline btn-icon" data-close-modal="modal-receiving">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Stepper Progress Header -->
+        <div class="stepper">
+          <div class="step-item active" id="step-recv-1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Delivery Manifest</div>
+          </div>
+          <div class="step-item" id="step-recv-2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Review & Inspection</div>
+          </div>
+          <div class="step-item" id="step-recv-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Stock Confirmation</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Input Details -->
+        <div id="recv-body-step1">
+          <form id="form-receiving-step1">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label required" for="recv-del-num">Delivery / Waybill Number</label>
+                <input type="text" id="recv-del-num" class="form-control font-mono" placeholder="e.g. DEL-9022-K" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="recv-supplier">Supplier Name</label>
+                <input type="text" id="recv-supplier" class="form-control" placeholder="e.g. ScanTech Global" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required" for="recv-product">Target Product Line</label>
+              <select id="recv-product" class="form-select font-mono" required>
+                <!-- Populated dynamically via JS -->
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+              <div class="form-group">
+                <label class="form-label required" for="recv-qty">Units Received</label>
+                <input type="number" id="recv-qty" class="form-control font-mono" min="1" value="25" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="recv-condition">Physical Condition</label>
+                <select id="recv-condition" class="form-select">
+                  <option value="Good Condition">Good Condition (Inspected)</option>
+                  <option value="Damaged Box">Damaged Box (Quarantine)</option>
+                  <option value="Partial Shipment">Partial Shipment</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 2: Review (Rule #4 & #5: Closure & Error Prevention) -->
+        <div id="recv-body-step2" style="display: none;">
+          <div class="card" style="padding: 16px; background-color: var(--color-bg-subtle);">
+            <h4 style="margin-bottom: 12px; color: var(--color-primary); display: flex; align-items: center; gap: 6px;">
+              <i class="ph-bold ph-clipboard-text"></i> Summary of Inbound Goods to Confirm:
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: var(--font-size-sm);">
+              <div><strong>Waybill Number:</strong> <span id="rev-del-num" class="font-mono"></span></div>
+              <div><strong>Supplier:</strong> <span id="rev-supplier"></span></div>
+              <div><strong>Product:</strong> <span id="rev-product"></span></div>
+              <div><strong>Quantity to Add:</strong> <span id="rev-qty" class="font-mono" style="color: var(--color-success); font-weight: bold;"></span></div>
+              <div><strong>Condition:</strong> <span id="rev-condition" class="badge badge-completed"></span></div>
+              <div><strong>Verified By:</strong> <span>User</span>(Supervisor)</span></div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; font-size: var(--font-size-xs); color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px;">
+            <i class="ph-bold ph-info" style="color: var(--color-primary); font-size: 1.15rem; flex-shrink: 0;"></i>
+            <span>Confirming this delivery will immediately increment stock quantity in Module 3 and register an immutable audit log in Module 6.</span>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal="modal-receiving">Cancel</button>
+        <button type="button" class="btn btn-secondary" id="btn-recv-step2-back" style="display: none;">
+          <i class="ph-bold ph-arrow-left"></i>
+          <span>Back</span>
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-recv-step1-next">
+          <span>Review Inbound</span>
+          <i class="ph-bold ph-arrow-right"></i>
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-recv-step2-confirm" style="display: none;">
+          <i class="ph-bold ph-check"></i>
+          <span>Confirm & Update Stock</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Order Picking Interactive Checklist (USER FLOW 2) -->
+  <div id="modal-picking" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h2>Order Fulfillment & Picking Run</h2>
+          <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+            Order: <span id="picking-order-id" class="font-mono" style="font-weight: bold; color: var(--color-primary);"></span> • 
+            Customer: <span id="picking-customer"></span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-icon" data-close-modal="modal-picking">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); margin-bottom: 6px;">
+          <span>Progress: <strong id="picking-count">0 of 0 items picked</strong></span>
+          <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Check off items as scanned</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="picking-progress-bar"></div>
+        </div>
+
+        <div id="picking-checklist-items" style="margin-top: var(--space-4);">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal="modal-picking">Close Picking Run</button>
+        <button type="button" class="btn btn-primary" id="btn-complete-order-picking" disabled>
+          <i class="ph-bold ph-check-circle"></i>
+          <span>Complete Order & Dispatch</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Delete Confirmation Dialog (Rule #5: Prevent Errors) -->
+  <div id="modal-delete-confirm" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2>Confirm Deletion</h2>
+        <button type="button" class="btn btn-outline btn-icon" data-close-modal="modal-delete-confirm">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px;">Are you sure you want to delete this product from the active warehouse catalog?</p>
+        <div style="background-color: var(--color-danger-bg); border: 1px solid var(--color-danger-border); padding: 12px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;">
+          <i class="ph-bold ph-warning" style="color: var(--color-danger); font-size: 1.25rem;"></i>
+          <strong id="delete-prod-sku" style="color: var(--color-danger);"></strong>
+        </div>
+        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 10px;">
+          Note: This action is reversible via the Undo prompt (Rule #6).
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close-modal="modal-delete-confirm">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">
+          <i class="ph-bold ph-trash"></i>
+          <span>Yes, Delete Item</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+  <!-- ====================================================================
+       PERSISTENT FLOATING NOTIFICATIONS & HCI HELPERS
+       ==================================================================== -->
+  <!-- Toast Container (Rule #3 & #6: Feedback & Reversal) -->
+  <div id="toast-container" class="toast-container" aria-live="assertive"></div>
+
+  
+
+
+  <!-- ====================================================================
+       BEHAVIOR & LOGIC LAYER (Separation of Concerns)
+       ==================================================================== -->
+</body>
+</html>
